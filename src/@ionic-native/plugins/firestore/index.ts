@@ -13,43 +13,13 @@ import { Injectable } from '@angular/core';
 import { Cordova, CordovaInstance, CordovaProperty, InstanceProperty, IonicNativePlugin, Plugin } from '@ionic-native/core';
 import { Observable } from 'rxjs/Observable';
 
-export interface FirestoreOptions {
+import { FirestoreConfig } from './firestoreconfig';
+import { FirestoreOptions } from './firestoreoptions';
+export { FirestoreConfig } from './firestoreconfig';
+export { FirestoreOptions } from './firestoreoptions';
 
-  /**
-   * When initialising the plugin you can set up a prefix that is applied to a string value which is used to identify it as a date. The default prefix is __DATE:
-   */
-  datePrefix?: string;
-
-  /**
-   * When initialising the plugin you can set up a prefix that is applied to a string value which is used to identify it as a deleted fieldValue. The default prefix is __DELETE:
-   */
-  fieldValueDelete?: string;
-
-  /**
-   * When initialising the plugin you can set up a prefix that is applied to a string value which is used to identify it as a server timstamp. The default prefix is __SERVERTIMESTAMP:
-   */
-  fieldValueServerTimestamp?: string;
-
-  /**
-   * When initialising the plugin you can set up a prefix that is applied to a string value which is used to identify it as a geopoint. The default prefix is __GEOPOINT:
-   */
-  geopointPrefix?: string;
-
-  /**
-   * Attempts to enable persistent storage, if possible. (default: true)
-   */
-  persist?: boolean;
-
-  /**
-   * Use `Timestamp`s instead of Dates. (default: true)
-   */
-  timestampsInSnapshots?: boolean;
-
-  /**
-   * Additional options
-   */
-  config?: any;
-}
+import { CollectionReference } from './collectionreference';
+export { CollectionReference } from './collectionreference';
 
 /**
  * @name Firestore
@@ -95,8 +65,7 @@ export class Firestore extends IonicNativePlugin {
   initialise(options: FirestoreOptions): Promise<any> {
     return new Promise<any>((resolve) => {
       Firestore.getPlugin().initialise(options).then((db: any) => {
-        console.log(db);
-        resolve(db);
+        resolve(new FirestoreDatabase(db));
       });
     });
   }
@@ -110,9 +79,37 @@ export class Firestore extends IonicNativePlugin {
   initialize(options: FirestoreOptions): Promise<any> {
     return new Promise<any>((resolve) => {
       Firestore.getPlugin().initialise(options).then((db: any) => {
-        console.log(db);
-        resolve(db);
+        resolve(new FirestoreDatabase(db));
       });
     });
   }
+}
+
+export class FirestoreDatabase {
+
+  private _objectInstance: any;
+
+  datePrefix = '__DATE:';
+  geopointPrefix = '__GEOPOINT:';
+  fieldValueDelete = '__DELETE:';
+  fieldValueServerTimestamp = '__SERVERTIMESTAMP:';
+  persist: boolean;
+  timestampsInSnapshots: boolean;
+
+  constructor(db: any) {
+    this._objectInstance = db;
+    this.datePrefix = db.datePrefix || this.datePrefix;
+    this.geopointPrefix = db.geopointPrefix || this.geopointPrefix;
+    this.fieldValueDelete = db.fieldValueDelete || this.fieldValueDelete;
+    this.fieldValueServerTimestamp = db.fieldValueServerTimestamp || this.fieldValueServerTimestamp;
+    this.persist = db.persist;
+    this.timestampsInSnapshots = db.timestampsInSnapshots;
+  }
+
+  collection(path: string): CollectionReference {
+    const collectionRef: any = this._objectInstance.collection(path);
+
+    return new CollectionReference(collectionRef);
+  }
+
 }
